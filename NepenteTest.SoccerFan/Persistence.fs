@@ -8,6 +8,7 @@ open Domain.Address
 open Domain.Dependent
 open Domain.Titular
 open Infrastructure
+open System.Data.Objects.DataClasses
 
 [<LiteralAttribute>]
 let connectionString = "Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Projects\NepenteTest.SoccerFan\NepenteTest.SoccerFan.Database\Database.mdf;Integrated Security=True"
@@ -21,7 +22,7 @@ let private commit func =
         func context
         context.DataContext.SaveChanges() |> ignore
         Success
-    with ex -> Error [| ex.Message |]
+    with ex -> Error (getExceptionMessages ex)
 
 let private addressReferenceToModel (reference : EntityConnection.ServiceTypes.Address )= 
          { Street = reference.Street; 
@@ -31,6 +32,15 @@ let private addressReferenceToModel (reference : EntityConnection.ServiceTypes.A
            State = reference.State;
            Neighborhood = reference.Neighborhood}
 
+
+let private addressModelToReference (model : Address.Data) =
+    new EntityConnection.ServiceTypes.Address(Street = model.Street,
+                                              City = model.City,
+                                              PostCode = model.PostCode,
+                                              Number = model.Number,
+                                              Neighborhood = model.Neighborhood,
+                                              State = model.State )
+
 module internal address =
     let private getReference id =
         query{ for address in EntityConnection.GetDataContext().Addresses do
@@ -38,11 +48,6 @@ module internal address =
                select address} |> Seq.head
 
     let getAddress id = getReference id |> addressReferenceToModel
-    
-    let getByTitularId titularId = 
-        query { for address in EntityConnection.GetDataContext().Addresses do
-                where (address.TitularId = titularId)
-                select address } |> Seq.head |>  addressReferenceToModel
 
 let private dependentReferenceToModel (reference : EntityConnection.ServiceTypes.Dependent ) : Dependent.Data = 
          { FirstName = reference.FirstName; 
@@ -64,14 +69,17 @@ module titular =
                select titular} |> Seq.head
 
     let private referenceToModel (ref : EntityConnection.ServiceTypes.Titular) = 
+        let address =  ref.Address |> addressReferenceToModel
+        let dependents = ref.Dependents |> Seq.map dependentReferenceToModel
+
         {FirstName =  ref.FirstName; 
          LastName = ref.LastName; 
          Phone = ref.Phone; 
          Email = ref.Email; 
          BirthDate = ref.BirthDate;
          CPF = ref.CPF;
-         Address = ref.Address |> addressReferenceToModel;
-         Dependents = ref.Dependents |> Seq.map dependentReferenceToModel }
+         Address = address;
+         Dependents = dependents }
 
     let private modelToReference (model : SaveCommand) =        
         new EntityConnection.ServiceTypes.Titular(FirstName = model.FirstName,
@@ -82,8 +90,11 @@ module titular =
                                                   CPF = model.CPF)
 
     let create (titular : SaveCommand) = 
-        commit (fun (context) -> let reference = titular |> modelToReference
-                                 context.Titulars.AddObject(reference))
+        commit (fun (context) -> let titularReference = titular |> modelToReference
+                                 let addressRef = addressModelToReference titular.Address  
+                                 context.Titulars.AddObject titularReference
+                                 context.Addresses.AddObject addressRef    
+                                 titularReference.Address <- addressRef)
     
     let update id (titular : SaveCommand) = 
         commit (fun (context) -> let ref = getTitularReference context id
@@ -96,10 +107,9 @@ module titular =
     
     let getTitulares() =
         let context = EntityConnection.GetDataContext()
-        context.Titulars |> Seq.map referenceToModel
+        context.Titulars |> Seq.toList |> Seq.map referenceToModel
 
     let getTitular id =
-        let address = address.getByTitularId id
         let dependents = dependent.getByTitularId id
         let context = EntityConnection.GetDataContext()
 
@@ -109,6 +119,6 @@ module titular =
                                                        Email = x.Email; 
                                                        BirthDate = x.BirthDate;
                                                        CPF = x.CPF;
-                                                       Address = address;
+                                                       Address = x.Address |> addressReferenceToModel;
                                                        Dependents = dependents }
             

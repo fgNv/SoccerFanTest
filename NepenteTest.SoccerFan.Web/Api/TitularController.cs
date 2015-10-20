@@ -1,4 +1,5 @@
 ﻿using NepenteTest.SoccerFan.Interop;
+using NepenteTest.SoccerFan.Web.Exceptions;
 using NepenteTest.SoccerFan.Web.Models;
 using System;
 using System.Collections.Generic;
@@ -29,9 +30,8 @@ namespace NepenteTest.SoccerFan.Web.Api
             var result = _titularService.Create(request);
             if (!result.IsError)
                 return;
-
-            var messages = (result as OperationResult.Error).Item;
-            throw new Exception(messages.FirstOrDefault());
+            
+            throw new OperationResultException(result as OperationResult.Error);
         }
 
         [HttpPut]

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Serialization;
+﻿using NepenteTest.SoccerFan.Web.Filters;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,8 @@ namespace NepenteTest.SoccerFan.Web
 
             GlobalConfiguration.Configuration.Formatters.JsonFormatter.SerializerSettings.ContractResolver =
                 new CamelCasePropertyNamesContractResolver();
+
+            config.Filters.Add(new HandleExceptionAttribute());
         }
     }
 }

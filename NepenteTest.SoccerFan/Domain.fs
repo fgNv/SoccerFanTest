@@ -27,9 +27,7 @@ let private validate<'T> (validate : ('T -> seq<string>)) data =
     match errors |> Seq.length with 
         | 0 -> Success
         | _ -> Error errors   
-
-
-
+        
 module Address = 
     [<CLIMutable>]
     type Data = {Street : String; Number : int;  City : string;  PostCode : String;
