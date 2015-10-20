@@ -93,7 +93,6 @@ module titular =
         commit (fun (context) -> let titularReference = titular |> modelToReference
                                  let addressRef = addressModelToReference titular.Address  
                                  context.Titulars.AddObject titularReference
-                                 context.Addresses.AddObject addressRef    
                                  titularReference.Address <- addressRef)
     
     let update id (titular : SaveCommand) = 
