@@ -3,7 +3,7 @@
 open System
 open Infrastructure
 
-let private Create<'T> (validate : 'T -> OperationResult)
+let private create<'T> (validate : 'T -> OperationResult)
                        (persist : ('T -> OperationResult))
                         data 
                         =
@@ -11,7 +11,7 @@ let private Create<'T> (validate : 'T -> OperationResult)
         | Success -> persist data
         | Error err -> Error err
 
-let private Update<'T> (validate : 'T -> OperationResult)                       
+let private update<'T> (validate : 'T -> OperationResult)
                        (persist : (int -> 'T -> OperationResult))
                        id 
                        data  =
@@ -19,14 +19,14 @@ let private Update<'T> (validate : 'T -> OperationResult)
         | Success -> persist id data 
         | Error err -> Error err
 
-let private Remove id (remove : (int -> OperationResult)) =        
+let private remove id (remove : (int -> OperationResult)) =
         remove id
 
 let private validate<'T> (validate : ('T -> seq<string>)) data =
     let errors = validate data
     match errors |> Seq.length with 
         | 0 -> Success
-        | _ -> Error errors   
+        | _ -> Error errors
         
 module Address = 
     [<CLIMutable>]
@@ -43,12 +43,12 @@ module Address =
                    if String.IsNullOrWhiteSpace address.PostCode then 
                         yield "Informe o CEP" }
 
-    let validate = validate getErrors    
+    let validate = validate getErrors
 
-type Plan = {Name : String; Price : double}
+type Plan = {Name : String; Price : double; Id : int}
 
 module Dependent = 
-    type Data = {FirstName : String;  LastName : String;  CPF : String;  
+    type Data = {FirstName : String;  LastName : String;  CPF : String;
                  Email : String; TitularId : int}
     
     let private getErrors dependent = 
@@ -61,18 +61,18 @@ module Dependent =
                    if String.IsNullOrWhiteSpace dependent.Email then 
                         yield "Informe o Email do dependente" }
 
-    let validate = validate getErrors    
+    let validate = validate getErrors
 
-module Titular =      
+module Titular =
     [<CLIMutable>]
-    type SaveCommand = {FirstName : string; LastName : string;  Phone : string;  
+    type SaveCommand = {FirstName : string; LastName : string;  Phone : string;
                         Email : string; BirthDate : DateTime;  CPF : string;
+                        PlanId : int;
                         Address : Address.Data  }
     
-
     type Data = {FirstName : string; LastName : string;  Phone : string;  Email : string; 
                  BirthDate : DateTime;  CPF : String; Address : Address.Data; 
-                 Dependents : seq<Dependent.Data> }
+                 Plan : Plan; Dependents : seq<Dependent.Data> }
     
     let private getErrors (titular : SaveCommand) = 
             seq {  if String.IsNullOrWhiteSpace titular.FirstName then 
@@ -95,6 +95,6 @@ module Titular =
                 }
 
     let validate = validate getErrors 
-    let create = Create validate
-    let update = Update validate
-    let remove = Remove
+    let create = create validate
+    let update = update validate
+    let remove = remove

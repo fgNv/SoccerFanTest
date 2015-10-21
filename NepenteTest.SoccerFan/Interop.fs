@@ -6,3 +6,6 @@ type TitularService() =
     member x.Update(id, data) = Domain.Titular.update Persistence.titular.update id data
     member x.GetAll() = Persistence.titular.getTitulares()
 
+type PlanService() =
+    member x.GetAll() = Persistence.plan.getAll()
+
