@@ -65,6 +65,10 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <DependentUpon>Database.mdf</DependentUpon>
     </Content>
+    <Content Include="DDL\dbo.Address.sql" />
+    <Content Include="DDL\dbo.Dependent.sql" />
+    <Content Include="DDL\dbo.Plan.sql" />
+    <Content Include="DDL\dbo.Titular.sql" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
